@@ -1,8 +1,8 @@
 import './styles.css';
-import { Game } from './game/Game';
+import { GameVisual } from './game/GameVisual';
 
 const canvas = document.querySelector<HTMLCanvasElement>('#game')!;
-const game = new Game(canvas);
+const game = new GameVisual(canvas);
 game.boot();
 
 if ('serviceWorker' in navigator) {
