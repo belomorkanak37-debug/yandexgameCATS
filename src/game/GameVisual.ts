@@ -36,7 +36,10 @@ export class GameVisual {
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d')!;
-    this.bg.src = 'menu-background.svg';
+    this.bg.onerror = () => {
+      if (!this.bg.src.endsWith('menu-background.svg')) this.bg.src = 'menu-background.svg';
+    };
+    this.bg.src = 'menu-background.webp';
   }
 
   boot() {
@@ -74,11 +77,9 @@ export class GameVisual {
 
   layout() {
     const m = this.metrics();
-    for (const row of this.board) {
-      for (const it of row) {
-        it.px = m.ox + it.x * m.cell + m.cell / 2;
-        it.py = m.oy + it.y * m.cell + m.cell / 2;
-      }
+    for (const row of this.board) for (const it of row) {
+      it.px = m.ox + it.x * m.cell + m.cell / 2;
+      it.py = m.oy + it.y * m.cell + m.cell / 2;
     }
   }
 
@@ -232,7 +233,7 @@ export class GameVisual {
     }
     const v = c.createRadialGradient(this.w / 2, this.h * 0.45, 20, this.w / 2, this.h * 0.45, this.h * 0.75);
     v.addColorStop(0, 'rgba(255,255,255,0)');
-    v.addColorStop(1, 'rgba(45,20,8,.28)');
+    v.addColorStop(1, 'rgba(45,20,8,.22)');
     c.fillStyle = v;
     c.fillRect(0, 0, this.w, this.h);
   }
@@ -375,16 +376,14 @@ export class GameVisual {
       this.chain.forEach((it, i) => (i ? c.lineTo(it.px, it.py) : c.moveTo(it.px, it.py)));
       c.stroke();
     }
-    for (const row of this.board) {
-      for (const it of row) {
-        c.fillStyle = it.sel ? 'rgba(83,188,255,.58)' : 'rgba(255,247,224,.72)';
-        roundRect(c, it.px - m.cell * 0.43, it.py - m.cell * 0.43, m.cell * 0.86, m.cell * 0.86, 14);
-        c.fill();
-        c.font = `${Math.round(m.cell * 0.48)}px Arial`;
-        c.textAlign = 'center';
-        c.textBaseline = 'middle';
-        c.fillText(label[it.t], it.px, it.py + 2);
-      }
+    for (const row of this.board) for (const it of row) {
+      c.fillStyle = it.sel ? 'rgba(83,188,255,.58)' : 'rgba(255,247,224,.72)';
+      roundRect(c, it.px - m.cell * 0.43, it.py - m.cell * 0.43, m.cell * 0.86, m.cell * 0.86, 14);
+      c.fill();
+      c.font = `${Math.round(m.cell * 0.48)}px Arial`;
+      c.textAlign = 'center';
+      c.textBaseline = 'middle';
+      c.fillText(label[it.t], it.px, it.py + 2);
     }
   }
 }
