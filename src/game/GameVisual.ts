@@ -3,12 +3,12 @@ type Cell = { t: Item; x: number; y: number; sel: boolean; px: number; py: numbe
 type Button = { id: string; x: number; y: number; w: number; h: number; text: string };
 type Cat = { name: string; need: Item; count: number; got: number; pat: number; max: number };
 
-const items: Item[] = ['coffee', 'tea', 'milk', 'croissant', 'cake', 'cookie', 'fish', 'dessert'];
-const label: Record<Item, string> = { coffee: '☕', tea: '🍵', milk: '🥛', croissant: '🥐', cake: '🍰', cookie: '🍪', fish: '🐟', dessert: '🍓' };
-const names = ['Рыжик', 'Белла', 'Мурзик', 'Пуша', 'Барсик'];
+const ITEMS: Item[] = ['coffee', 'tea', 'milk', 'croissant', 'cake', 'cookie', 'fish', 'dessert'];
+const ICON: Record<Item, string> = { coffee: '☕', tea: '🍵', milk: '🥛', croissant: '🥐', cake: '🍰', cookie: '🍪', fish: '🐟', dessert: '🍓' };
+const NAMES = ['Рыжик', 'Белла', 'Мурзик', 'Пуша', 'Барсик'];
 const pick = <T,>(a: T[]) => a[Math.floor(Math.random() * a.length)];
 
-function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
+function rr(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
   ctx.beginPath();
   ctx.roundRect(x, y, w, h, r);
 }
@@ -17,6 +17,7 @@ export class GameVisual {
   canvas: HTMLCanvasElement;
   ctx: CanvasRenderingContext2D;
   bg = new Image();
+  logo = new Image();
   w = 390;
   h = 844;
   dpr = 1;
@@ -40,6 +41,7 @@ export class GameVisual {
       if (!this.bg.src.endsWith('menu-background.svg')) this.bg.src = 'menu-background.svg';
     };
     this.bg.src = 'menu-background.webp';
+    this.logo.src = 'logo-main.png';
   }
 
   boot() {
@@ -67,7 +69,7 @@ export class GameVisual {
   }
 
   availableItems() {
-    return items.slice(0, this.day >= 15 ? 8 : this.day >= 7 ? 7 : this.day >= 5 ? 6 : this.day >= 3 ? 5 : this.day >= 2 ? 4 : 3);
+    return ITEMS.slice(0, this.day >= 15 ? 8 : this.day >= 7 ? 7 : this.day >= 5 ? 6 : this.day >= 3 ? 5 : this.day >= 2 ? 4 : 3);
   }
 
   metrics() {
@@ -99,7 +101,7 @@ export class GameVisual {
   addCats() {
     while (this.cats.length < (this.day >= 10 ? 3 : 2)) {
       const need = pick(this.availableItems());
-      this.cats.push({ name: pick(names), need, count: 1 + Math.floor(Math.random() * 3), got: 0, pat: 26, max: 26 });
+      this.cats.push({ name: pick(NAMES), need, count: 1 + Math.floor(Math.random() * 3), got: 0, pat: 26, max: 26 });
     }
   }
 
@@ -238,6 +240,14 @@ export class GameVisual {
     c.fillRect(0, 0, this.w, this.h);
   }
 
+  drawLogo(centerY: number, maxW: number) {
+    if (!this.logo.complete || !this.logo.naturalWidth) return;
+    const ratio = this.logo.naturalHeight / this.logo.naturalWidth;
+    const w = Math.min(maxW, this.w * 0.9);
+    const h = w * ratio;
+    this.ctx.drawImage(this.logo, (this.w - w) / 2, centerY - h / 2, w, h);
+  }
+
   panel(x: number, y: number, w: number, h: number, r = 22) {
     const c = this.ctx;
     c.save();
@@ -248,7 +258,7 @@ export class GameVisual {
     const g = c.createLinearGradient(x, y, x, y + h);
     g.addColorStop(0, 'rgba(255,246,220,.94)');
     g.addColorStop(1, 'rgba(255,200,124,.9)');
-    roundRect(c, x, y, w, h, r);
+    rr(c, x, y, w, h, r);
     c.fillStyle = g;
     c.fill();
     c.strokeStyle = 'rgba(103,52,20,.28)';
@@ -279,30 +289,16 @@ export class GameVisual {
     return true;
   }
 
-  logo(y: number) {
-    const c = this.ctx;
-    c.textAlign = 'center';
-    c.font = '900 46px Arial';
-    c.strokeStyle = 'rgba(75,38,16,.55)';
-    c.lineWidth = 7;
-    c.strokeText('Котокафе', this.w / 2, y);
-    c.fillStyle = '#fff4da';
-    c.fillText('Котокафе', this.w / 2, y);
-    c.font = '800 22px Arial';
-    c.fillStyle = '#ffe26a';
-    c.fillText('Match & Serve', this.w / 2, y + 36);
-  }
-
   draw() {
     this.buttons = [];
     this.drawBg();
     if (this.screen === 'menu') {
-      this.logo(118);
-      this.panel(34, 162, this.w - 68, 64, 20);
+      this.drawLogo(118, this.w * 0.86);
+      this.panel(34, 180, this.w - 68, 58, 20);
       this.ctx.fillStyle = '#6d3b1f';
       this.ctx.textAlign = 'center';
       this.ctx.font = '800 18px Arial';
-      this.ctx.fillText(`День ${this.day}   🪙 ${this.coins}   Рекорд ${this.best}`, this.w / 2, 202);
+      this.ctx.fillText(`День ${this.day}   🪙 ${this.coins}   Рекорд ${this.best}`, this.w / 2, 216);
       this.button('play', 'Играть', this.w / 2 - 104, this.h * 0.62, 208, 60);
       this.button('menu', 'Улучшения', this.w / 2 - 104, this.h * 0.70, 208, 54);
       this.button('menu', 'Настройки', this.w / 2 - 104, this.h * 0.77, 208, 54);
@@ -314,7 +310,7 @@ export class GameVisual {
       this.drawBoard();
       return;
     }
-    this.logo(150);
+    this.drawLogo(128, this.w * 0.76);
     this.panel(42, 220, this.w - 84, 180, 24);
     this.ctx.fillStyle = '#6d3b1f';
     this.ctx.textAlign = 'center';
@@ -358,7 +354,7 @@ export class GameVisual {
       c.textAlign = 'center';
       c.fillText(cat.name, x - 34, y + 62);
       c.font = '24px Arial';
-      c.fillText(label[cat.need], x + 24, y + 22);
+      c.fillText(ICON[cat.need], x + 24, y + 22);
       c.font = '800 14px Arial';
       c.fillText(`${cat.got}/${cat.count}`, x + 24, y + 52);
     });
@@ -378,12 +374,12 @@ export class GameVisual {
     }
     for (const row of this.board) for (const it of row) {
       c.fillStyle = it.sel ? 'rgba(83,188,255,.58)' : 'rgba(255,247,224,.72)';
-      roundRect(c, it.px - m.cell * 0.43, it.py - m.cell * 0.43, m.cell * 0.86, m.cell * 0.86, 14);
+      rr(c, it.px - m.cell * 0.43, it.py - m.cell * 0.43, m.cell * 0.86, m.cell * 0.86, 14);
       c.fill();
       c.font = `${Math.round(m.cell * 0.48)}px Arial`;
       c.textAlign = 'center';
       c.textBaseline = 'middle';
-      c.fillText(label[it.t], it.px, it.py + 2);
+      c.fillText(ICON[it.t], it.px, it.py + 2);
     }
   }
 }
